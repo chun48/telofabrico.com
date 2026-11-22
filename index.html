@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TE LO FABRICO</title>
+  <style>
+    html, body {
+      margin: 0;
+      background: #000;
+    }
+
+    .site {
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      min-height: 100svh;
+    }
+
+    .brand-logo {
+      display: block;
+      width: auto;
+      height: min(60vh, 76vw, 26rem);
+      height: min(60svh, 76vw, 26rem);
+    }
+
+    @media (any-hover: hover) and (prefers-reduced-motion: no-preference) {
+      .brand-tilt {
+        perspective: 900px;
+      }
+
+      .brand-logo {
+        pointer-events: none;
+        transform: rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+        transition: transform 0.28s ease-out;
+      }
+
+      .brand-tilt:hover .brand-logo {
+        transition-duration: 0.12s;
+      }
+    }
+
+    .contact-toggle {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      min-height: 44px;
+      padding: 0 6px;
+      border: 0;
+      color: #e1e3e6;
+      background: transparent;
+      font: 600 0.9375rem/1.2 system-ui, sans-serif;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+    }
+
+    .contact-dialog {
+      box-sizing: border-box;
+      inset: auto 20px 20px auto;
+      width: min(400px, calc(100% - 40px));
+      max-width: none;
+      margin: 0;
+      padding: 18px;
+      color: #f5f6f7;
+      background: #303236;
+      border: 1px solid #686c74;
+      border-radius: 13px;
+      font: 16px/1.45 system-ui, sans-serif;
+    }
+
+    .contact-dialog::backdrop {
+      background: rgb(0 0 0 / 55%);
+    }
+
+    .contact-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .contact-header h1 {
+      margin: 0;
+      font-size: 1.25rem;
+    }
+
+    .contact-close {
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      color: inherit;
+      background: #222428;
+      border: 1px solid #787c84;
+      border-radius: 7px;
+      font: 1.5rem/1 system-ui, sans-serif;
+      cursor: pointer;
+    }
+
+    .contact-toggle:focus-visible,
+    .contact-close:focus-visible {
+      outline: 2px solid #62d9ed;
+      outline-offset: 4px;
+    }
+
+    .contact-frame {
+      display: block;
+      width: 100%;
+      height: 340px;
+      height: min(340px, calc(100dvh - 112px));
+      border: 0;
+    }
+
+    @media (max-width: 600px) {
+      .contact-dialog {
+        right: 12px;
+        bottom: 12px;
+        width: calc(100% - 24px);
+      }
+    }
+
+    @media (hover: hover) {
+      .contact-toggle:hover {
+        color: #10c5df;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="site">
+    <div class="brand-tilt">
+      <img class="brand-logo" src="./te-lo-fabrico-flecha.png" alt="TE LO FABRICO" width="835" height="1000" />
+    </div>
+    <button class="contact-toggle" type="button" aria-haspopup="dialog" aria-controls="contact-dialog">CONTACTO</button>
+    <dialog class="contact-dialog" id="contact-dialog" aria-labelledby="contact-title">
+      <header class="contact-header">
+        <h1 id="contact-title">Contacto</h1>
+        <form method="dialog">
+          <button class="contact-close" type="submit" aria-label="Cerrar contacto" autofocus>×</button>
+        </form>
+      </header>
+      <iframe class="contact-frame" title="Formulario de contacto" data-src="https://script.google.com/macros/s/AKfycbwTxJwaWF3eLPISIyoeGVUscfM59jwDAn7OYJuHm6_5BPOo54eJNUwMEoEOPhS2cMKY/exec"></iframe>
+    </dialog>
+  </main>
+  <script>
+    const tiltSurface = document.querySelector('.brand-tilt');
+    const tiltEnabled = matchMedia('(any-hover: hover) and (prefers-reduced-motion: no-preference)');
+    const maxTilt = 18;
+
+    tiltSurface.addEventListener('pointermove', (event) => {
+      if (event.pointerType !== 'mouse' || !tiltEnabled.matches) {
+        return;
+      }
+
+      const bounds = tiltSurface.getBoundingClientRect();
+      const horizontal = 2 * (event.clientX - bounds.left) / bounds.width - 1;
+      const vertical = 2 * (event.clientY - bounds.top) / bounds.height - 1;
+
+      tiltSurface.style.setProperty('--tilt-x', `${-vertical * maxTilt}deg`);
+      tiltSurface.style.setProperty('--tilt-y', `${horizontal * maxTilt}deg`);
+    });
+
+    function resetTilt() {
+      tiltSurface.style.removeProperty('--tilt-x');
+      tiltSurface.style.removeProperty('--tilt-y');
+    }
+
+    tiltSurface.addEventListener('pointerleave', resetTilt);
+    tiltSurface.addEventListener('pointercancel', resetTilt);
+    tiltEnabled.addEventListener('change', resetTilt);
+
+    const contactToggle = document.querySelector('.contact-toggle');
+    const contactDialog = document.querySelector('#contact-dialog');
+    const contactFrame = contactDialog.querySelector('iframe');
+
+    contactToggle.addEventListener('click', () => {
+      if (!contactFrame.hasAttribute('src')) {
+        contactFrame.src = contactFrame.dataset.src;
+      }
+      contactDialog.showModal();
+    });
+
+    window.addEventListener('message', (event) => {
+      const scriptOrigin = /^https:\/\/(?:[a-z0-9-]+-)?script\.googleusercontent\.com$/;
+      if (contactDialog.open && event.data === 'tlf-contact-ready' && scriptOrigin.test(event.origin)) {
+        event.source?.postMessage('tlf-contact-connected', event.origin);
+      }
+    });
+  </script>
+</body>
+</html>

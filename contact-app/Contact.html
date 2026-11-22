@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      color-scheme: dark;
+      font: 16px/1.45 system-ui, sans-serif;
+      color: #f5f6f7;
+      background: #303236;
+    }
+    body { margin: 0; padding: 2px; }
+    form { display: grid; gap: 14px; }
+    label { display: grid; gap: 5px; font-weight: 600; }
+    input, textarea, button { box-sizing: border-box; font: inherit; }
+    input, textarea {
+      width: 100%;
+      padding: 9px 11px;
+      color: inherit;
+      background: #202226;
+      border: 1px solid #787c84;
+      border-radius: 7px;
+    }
+    textarea { min-height: 92px; resize: vertical; }
+    button {
+      justify-self: start;
+      padding: 8px 20px;
+      color: #071e23;
+      background: #10c5df;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button:disabled { opacity: 0.65; cursor: default; }
+    :focus-visible { outline: 2px solid #62d9ed; outline-offset: 2px; }
+    .contact-note, .contact-status { margin: 0; font-size: 0.875rem; }
+    .contact-note { color: #e1e3e6; }
+    .contact-status { min-height: 1.3em; }
+    .contact-trap { position: absolute; left: -10000px; }
+  </style>
+</head>
+<body>
+  <form id="contact-form" method="post" aria-describedby="contact-note">
+    <label for="email">
+      Tu correo electrónico
+      <input id="email" name="email" type="email" autocomplete="email" maxlength="254" required />
+    </label>
+    <label for="message">
+      Tu consulta
+      <textarea id="message" name="message" rows="3" maxlength="3000" required></textarea>
+    </label>
+    <div class="contact-trap" aria-hidden="true">
+      <label for="website">Deja este campo vacío</label>
+      <input id="website" name="website" autocomplete="off" tabindex="-1" />
+    </div>
+    <p class="contact-note" id="contact-note">Usaremos tu correo para responder a tu consulta.</p>
+    <button type="submit" disabled>Enviar consulta</button>
+    <p class="contact-status" role="status"></p>
+  </form>
+  <script>
+    const form = document.querySelector('#contact-form');
+    const message = form.elements.message;
+    const submit = form.querySelector('button');
+    const status = form.querySelector('[role="status"]');
+    const siteOrigin = 'https://telofabrico.com';
+    const ready = 'tlf-contact-ready';
+    const connected = 'tlf-contact-connected';
+
+    if (typeof google === 'undefined') {
+      status.textContent = 'Vista previa · El envío aún no está activo.';
+    } else {
+      window.addEventListener('message', (event) => {
+        if (event.origin === siteOrigin && event.source === window.top && event.data === connected) {
+          submit.disabled = false;
+        }
+      });
+      window.top.postMessage(ready, siteOrigin);
+    }
+
+    message.addEventListener('input', () => message.setCustomValidity(''));
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      if (submit.disabled) return;
+
+      if (!message.value.trim()) {
+        message.setCustomValidity('Escribe tu consulta.');
+        message.reportValidity();
+        return;
+      }
+
+      submit.disabled = true;
+      status.textContent = 'Enviando…';
+
+      function finish(result) {
+        submit.disabled = false;
+        if (result === 'sent') {
+          form.reset();
+          status.textContent = 'Consulta enviada. Gracias por escribirnos.';
+        } else if (result === 'invalid') {
+          status.textContent = 'Revisa el correo y la consulta antes de enviar.';
+        } else if (result === 'busy') {
+          status.textContent = 'El envío está ocupado. Inténtalo en unos minutos.';
+        } else {
+          status.textContent = 'No se pudo confirmar el envío. Inténtalo de nuevo.';
+        }
+      }
+
+      google.script.run.withSuccessHandler(finish)
+        .withFailureHandler(() => finish('unavailable'))
+        .sendContact(Object.fromEntries(new FormData(form)));
+    });
+  </script>
+</body>
+</html>
